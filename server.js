@@ -52,17 +52,26 @@ const server = new Server({
     })
   ],
 
-  async onConnect({ requestParameters, documentName }) {
-    if (supabaseUrl && supabaseAnonKey) {
-      const token = requestParameters.get('token')
-      if (!token) {
-        throw new Error('Unauthorized')
+  async onAuthenticate({ token, documentName }) {
+    try {
+      if (supabaseUrl && supabaseAnonKey) {
+        if (!token) {
+          throw new Error('Missing token')
+        }
+
+        const user = await verifySupabaseToken(token)
+        await ensureRoomMember(documentName, user.id, token)
       }
-
-      const user = await verifySupabaseToken(token)
-      await ensureRoomMember(documentName, user.id, token)
+    } catch (error) {
+      console.error('Auth failed', {
+        documentName,
+        message: error?.message || String(error)
+      })
+      throw error
     }
+  },
 
+  async onConnect() {
     console.log('Client connected')
   }
 })
