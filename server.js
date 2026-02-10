@@ -4,15 +4,12 @@ import { SQLite } from '@hocuspocus/extension-sqlite'
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
 
-const verifySupabaseToken = async (token) => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null
-  }
-
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+const fetchSupabaseJson = async (url, token) => {
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
-      apikey: supabaseAnonKey
+      apikey: supabaseAnonKey,
+      Accept: 'application/json'
     }
   })
 
@@ -21,6 +18,29 @@ const verifySupabaseToken = async (token) => {
   }
 
   return response.json()
+}
+
+const verifySupabaseToken = async (token) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  return fetchSupabaseJson(`${supabaseUrl}/auth/v1/user`, token)
+}
+
+const ensureRoomMember = async (roomId, userId, token) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return
+  }
+
+  const encodedRoom = encodeURIComponent(roomId)
+  const encodedUser = encodeURIComponent(userId)
+  const url = `${supabaseUrl}/rest/v1/room_members?select=room_id&room_id=eq.${encodedRoom}&user_id=eq.${encodedUser}`
+  const data = await fetchSupabaseJson(url, token)
+
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Unauthorized')
+  }
 }
 
 const server = new Server({
@@ -32,14 +52,15 @@ const server = new Server({
     })
   ],
 
-  async onConnect({ requestParameters }) {
+  async onConnect({ requestParameters, documentName }) {
     if (supabaseUrl && supabaseAnonKey) {
       const token = requestParameters.get('token')
       if (!token) {
         throw new Error('Unauthorized')
       }
 
-      await verifySupabaseToken(token)
+      const user = await verifySupabaseToken(token)
+      await ensureRoomMember(documentName, user.id, token)
     }
 
     console.log('Client connected')
