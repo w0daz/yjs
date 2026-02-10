@@ -6,8 +6,7 @@ const server = new Server({
   
   extensions: [
     new SQLite({
-      database: 'db.sqlite',
-      sqlite: 'better-sqlite3' // Add this line
+      database: 'db.sqlite'
     })
   ],
 
