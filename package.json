@@ -1,0 +1,22 @@
+{
+  "name": "yjs-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@hocuspocus/extension-sqlite": "^3.4.4",
+    "@hocuspocus/server": "^3.4.4",
+    "express": "^5.2.1",
+    "express-ws": "^5.0.2",
+    "ws": "^8.19.0",
+    "y-websocket": "^3.0.0"
+  }
+}
